@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LPU — Alumni Mentor Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A38;
+    --ink-soft:#4A5566;
+    --parchment:#F1ECDF;
+    --parchment-deep:#E7E0CE;
+    --brick:#B3452C;
+    --brick-deep:#8F3521;
+    --brass:#B08D48;
+    --ivy:#3F5B4D;
+    --rule:#CDC5AF;
+    --card-bg:#FBF9F3;
+    --focus:#1E2A38;
+    --radius:3px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    margin:0;
+    color:var(--ink);
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{ color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+  ::selection{ background:var(--brass); color:#fff; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+  :focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+  #app{ min-height:100vh; display:flex; flex-direction:column; }
+
+  header.masthead{
+    position:sticky; top:0; z-index:30;
+    background:var(--parchment);
+    border-bottom:1px solid var(--rule);
+  }
+  .masthead-inner{
+    max-width:1220px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px; gap:20px;
+  }
+  .wordmark{ display:flex; align-items:baseline; gap:10px; }
+  .wordmark h1{ font-size:22px; letter-spacing:0.2px; }
+  .wordmark span.tag{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft);
+    border-left:1px solid var(--rule); padding-left:10px;
+  }
+  nav.tabs{ display:flex; gap:2px; }
+  nav.tabs button{
+    background:none; border:none; font-size:14.5px; color:var(--ink-soft);
+    padding:9px 14px; border-radius:var(--radius); border-bottom:2px solid transparent;
+  }
+  nav.tabs button.active{ color:var(--ink); border-bottom:2px solid var(--brick); font-weight:500; }
+  nav.tabs button:hover{ color:var(--ink); }
+
+  main{ flex:1; max-width:1220px; margin:0 auto; padding:32px 28px 80px; width:100%; }
+
+  .view-head{ margin-bottom:26px; max-width:660px; }
+  .view-head h2{ font-size:28px; margin-bottom:8px; }
+  .view-head p{ color:var(--ink-soft); font-size:14.5px; }
+
+  /* ---------- Directory layout ---------- */
+  .directory-grid{ display:grid; grid-template-columns:230px 1fr; gap:36px; align-items:start; }
+  .filter-rail{ border-right:1px solid var(--rule); padding-right:24px; position:sticky; top:92px; }
+  .filter-group{ margin-bottom:22px; }
+  .filter-group h4{
+    font-size:12.5px; font-family:'IBM Plex Mono', monospace; color:var(--ink-soft);
+    font-weight:500; margin-bottom:10px;
+  }
+  .filter-option{ display:flex; align-items:center; gap:8px; padding:5px 0; font-size:14px; color:var(--ink); }
+  .filter-option input{ accent-color:var(--brick); width:14px; height:14px; }
+  .search-box, select.search-box{
+    width:100%; padding:8px 10px; border:1px solid var(--rule); background:var(--card-bg);
+    border-radius:var(--radius); font-size:14px; color:var(--ink); font-family:inherit;
+  }
+  .search-box::placeholder{ color:#9a927e; }
+  .batch-range{ display:flex; align-items:center; gap:8px; }
+  .batch-range input{
+    width:100%; padding:8px 8px; border:1px solid var(--rule); background:var(--card-bg);
+    border-radius:var(--radius); font-size:14px; color:var(--ink); font-family:'IBM Plex Mono', monospace;
+  }
+  .batch-range span{ color:var(--ink-soft); font-size:13px; }
+  .clear-filters{
+    background:none; border:none; color:var(--brick); font-size:13px; padding:0;
+    text-decoration:underline; text-underline-offset:3px;
+  }
+
+  .results-count{ font-size:13px; color:var(--ink-soft); margin-bottom:14px; }
+  .mentor-list{ display:flex; flex-direction:column; gap:14px; }
+
+  .mentor-card{
+    display:flex; background:var(--card-bg); border:1px solid var(--rule);
+    border-radius:var(--radius); overflow:hidden; width:100%;
+  }
+  .mentor-tab{
+    flex:0 0 42px; background:var(--ink); color:var(--parchment);
+    display:flex; align-items:center; justify-content:center; position:relative;
+  }
+  .mentor-tab span{
+    writing-mode:vertical-rl; transform:rotate(180deg);
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:0.3px; white-space:nowrap;
+  }
+  .mentor-body{ padding:16px 20px; flex:1; display:flex; flex-direction:column; gap:6px; }
+  .mentor-top{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .mentor-top h3{ font-size:18px; }
+  .mentor-role{ font-size:13.5px; color:var(--ink-soft); }
+  .mentor-industry-line{ font-size:12.5px; color:var(--brass); font-family:'IBM Plex Mono', monospace; }
+  .mentor-tags{ font-size:12.5px; color:var(--ink-soft); }
+  .mentor-tags b{ color:var(--ink); font-weight:500; }
+  .mentor-actions{ margin-top:8px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius);
+    font-size:13.5px; padding:8px 14px; border:1px solid transparent;
+  }
+  .btn-primary{ background:var(--brick); color:#fff; }
+  .btn-primary:hover{ background:var(--brick-deep); }
+  .btn-ghost{ background:none; border:1px solid var(--rule); color:var(--ink); }
+  .btn-ghost:hover{ border-color:var(--ink); }
+  .linkedin-link{
+    font-size:13px; color:var(--ink-soft); text-decoration:underline; text-underline-offset:3px;
+  }
+  .linkedin-link:hover{ color:var(--ink); }
+  .slots-hint{ font-size:12.5px; color:var(--ivy); }
+  .slots-hint.full{ color:var(--ink-soft); }
+
+  .empty-state{
+    border:1px dashed var(--rule); border-radius:var(--radius); padding:40px 24px;
+    text-align:center; color:var(--ink-soft);
+  }
+  .empty-state p{ margin:0 0 14px; }
+
+  /* ---------- Detail panel ---------- */
+  .scrim{
+    position:fixed; inset:0; background:rgba(30,42,56,0.35);
+    opacity:0; pointer-events:none; transition:opacity 0.18s ease; z-index:40;
+  }
+  .scrim.open{ opacity:1; pointer-events:auto; }
+  .panel{
+    position:fixed; top:0; right:0; height:100%; width:min(500px, 100%);
+    background:var(--parchment); border-left:1px solid var(--rule);
+    box-shadow:-6px 0 24px rgba(30,42,56,0.12);
+    transform:translateX(100%); transition:transform 0.22s ease; z-index:41;
+    display:flex; flex-direction:column;
+  }
+  .panel.open{ transform:translateX(0); }
+  .panel-head{
+    padding:20px 24px; border-bottom:1px solid var(--rule);
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+  }
+  .panel-close{ background:none; border:none; font-size:20px; color:var(--ink-soft); line-height:1; padding:4px; }
+  .panel-close:hover{ color:var(--ink); }
+  .panel-body{ padding:22px 24px; overflow-y:auto; flex:1; }
+  .avatar-stamp{
+    width:54px; height:54px; border-radius:50%; border:1.5px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-size:19px; margin-bottom:14px;
+  }
+  .panel-body h3{ font-size:22px; margin-bottom:2px; }
+  .panel-meta{ font-size:13.5px; color:var(--ink-soft); margin-bottom:4px; }
+  .panel-linkedin{ font-size:13.5px; margin-bottom:16px; display:inline-block; text-decoration:underline; text-underline-offset:3px; color:var(--ink); }
+  .panel-section{ margin-bottom:22px; }
+  .panel-section h4{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft);
+    font-weight:500; margin-bottom:8px;
+  }
+  .panel-section p{ font-size:14.5px; margin:0; }
+  .tag-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .tag-pill{ border:1px solid var(--rule); border-radius:20px; padding:4px 11px; font-size:12.5px; color:var(--ink-soft); }
+  .tag-pill.topic{ border-color:var(--brass); color:var(--ink); }
+
+  /* ---------- Booking calendar ---------- */
+  .calendar-wrap{ border:1px solid var(--rule); border-radius:var(--radius); overflow:hidden; }
+  .calendar-table{ width:100%; border-collapse:collapse; }
+  .calendar-table th{
+    background:var(--parchment-deep); font-family:'IBM Plex Mono', monospace;
+    font-weight:500; font-size:12px; color:var(--ink-soft); text-align:center;
+    padding:9px 6px; border-bottom:1px solid var(--rule);
+  }
+  .calendar-table th span.day-name{ display:block; font-size:11px; }
+  .calendar-table th span.day-date{ display:block; color:var(--ink); font-size:13px; margin-top:2px; }
+  .calendar-table td{
+    text-align:center; padding:8px 6px; border-bottom:1px solid var(--rule);
+    border-right:1px solid var(--rule); font-size:12.5px;
+  }
+  .calendar-table td:last-child, .calendar-table th:last-child{ border-right:none; }
+  .calendar-table tr:last-child td{ border-bottom:none; }
+  .calendar-table td.rowlabel{
+    text-align:left; font-family:'IBM Plex Mono', monospace; color:var(--ink-soft); font-size:12px;
+    background:var(--parchment-deep); border-right:1px solid var(--rule);
+  }
+  .slot-cell-btn{
+    width:100%; background:var(--card-bg); border:1px solid var(--ivy); color:var(--ivy);
+    border-radius:var(--radius); padding:5px 4px; font-size:12px; font-family:'IBM Plex Mono', monospace;
+  }
+  .slot-cell-btn:hover{ background:var(--ivy); color:#fff; }
+  .slot-cell-btn.selected{ background:var(--ivy); color:#fff; }
+  .slot-cell-taken{ color:#a89f8a; font-family:'IBM Plex Mono', monospace; font-size:11.5px; }
+  .slot-cell-none{ color:#c9c2b2; }
+  .calendar-legend{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  .calendar-none-option{
+    display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13.5px;
+    border:1px solid var(--rule); border-radius:var(--radius); padding:9px 12px;
+  }
+  .calendar-none-option input{ accent-color:var(--brick); }
+
+  textarea, input[type="url"], input[type="text"].form-input{
+    width:100%; border:1px solid var(--rule); border-radius:var(--radius);
+    padding:10px 12px; font-family:inherit; font-size:14px; color:var(--ink); background:var(--card-bg);
+  }
+  textarea{ min-height:90px; resize:vertical; }
+  select.form-input{
+    width:100%; border:1px solid var(--rule); border-radius:var(--radius);
+    padding:10px 12px; font-family:inherit; font-size:14px; color:var(--ink); background:var(--card-bg);
+  }
+  .field-label{ display:block; font-size:13px; color:var(--ink-soft); margin-bottom:6px; }
+  .panel-footer{ padding:16px 24px; border-top:1px solid var(--rule); }
+  .panel-footer .btn{ width:100%; justify-content:center; padding:11px; font-size:14.5px; }
+  .form-note{ font-size:12.5px; color:var(--ink-soft); margin-top:8px; }
+  .form-error{ font-size:12.5px; color:var(--brick); margin-top:8px; }
+
+  /* ---------- My mentorship ---------- */
+  .request-row{
+    display:flex; gap:20px; align-items:flex-start; border:1px solid var(--rule);
+    border-radius:var(--radius); background:var(--card-bg); padding:16px 20px; margin-bottom:12px; flex-wrap:wrap;
+  }
+  .request-main{ flex:1; min-width:240px; }
+  .request-main h3{ font-size:16.5px; margin-bottom:3px; }
+  .request-meta{ font-size:13px; color:var(--ink-soft); }
+  .request-msg{ font-size:13.5px; color:var(--ink); margin-top:6px; max-width:440px; }
+  .request-resume{ font-size:13px; margin-top:4px; }
+  .request-resume a{ text-decoration:underline; text-underline-offset:3px; }
+  .stamp{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; border:1.5px solid currentColor;
+    border-radius:4px; padding:5px 12px; transform:rotate(-3deg); white-space:nowrap;
+  }
+  .stamp.pending{ color:var(--brass); }
+  .stamp.confirmed{ color:var(--ivy); }
+  .stamp.declined{ color:var(--ink-soft); transform:rotate(2deg); }
+  .request-cancel{
+    background:none; border:none; color:var(--brick); font-size:13px; text-decoration:underline;
+    text-underline-offset:3px; padding:0;
+  }
+
+  /* ---------- Resources ---------- */
+  .resource-row{ border-bottom:1px solid var(--rule); padding:18px 0; }
+  .resource-row:first-child{ border-top:1px solid var(--rule); }
+  .resource-top{ display:flex; justify-content:space-between; align-items:center; gap:16px; cursor:pointer; }
+  .resource-top h3{ font-size:16.5px; }
+  .resource-cat{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft); }
+  .resource-toggle{ background:none; border:none; font-size:18px; color:var(--ink-soft); }
+  .resource-detail{ display:none; font-size:14.5px; color:var(--ink); margin-top:10px; max-width:640px; }
+  .resource-row.expanded .resource-detail{ display:block; }
+  .resource-row.expanded .resource-toggle{ transform:rotate(45deg); }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translate(-50%, 12px);
+    background:var(--ink); color:var(--parchment); padding:12px 20px; border-radius:var(--radius);
+    font-size:14px; opacity:0; pointer-events:none; transition:all 0.2s ease; z-index:50; max-width:90%; text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  .filters-toggle{ display:none; }
+
+  @media (max-width: 860px){
+    .masthead-inner{ padding:14px 18px; }
+    .wordmark span.tag{ display:none; }
+    nav.tabs{ display:none; }
+    main{ padding:22px 18px 90px; }
+    .directory-grid{ grid-template-columns:1fr; }
+    .filter-rail{
+      position:fixed; top:0; left:0; height:100%; width:min(300px,84%);
+      background:var(--parchment); border-right:1px solid var(--rule); padding:24px 20px;
+      z-index:41; overflow-y:auto; transform:translateX(-100%); transition:transform 0.2s ease;
+    }
+    .filter-rail.open{ transform:translateX(0); }
+    .filters-toggle{ display:inline-flex; margin-bottom:16px; }
+    .bottom-tabs{
+      display:flex; position:fixed; bottom:0; left:0; right:0;
+      background:var(--parchment); border-top:1px solid var(--rule); z-index:30;
+    }
+    .bottom-tabs button{
+      flex:1; background:none; border:none; padding:12px 6px; font-size:12.5px; color:var(--ink-soft);
+      display:flex; flex-direction:column; align-items:center; gap:3px;
+    }
+    .bottom-tabs button.active{ color:var(--brick); font-weight:500; }
+    .panel{ width:100%; }
+    .calendar-table{ font-size:11px; }
+  }
+  @media (min-width:861px){ .bottom-tabs{ display:none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="wordmark">
+        <h1>LOVELY PROFESSIONAL UNI - ALUMNI NETWORK</h1>
+        <span class="tag mono">Rising Beyond Standards: Our Journey of Recognition, Rankings, and Remarkable Achievements</span>
+      </div>
+      <nav class="tabs" id="topNav"></nav>
+    </div>
+  </header>
+
+  <main id="mainContent"></main>
+  <nav class="bottom-tabs" id="bottomNav"></nav>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="panel" id="panel" aria-hidden="true"></aside>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   Data
+--------------------------------------------------------- */
+const INDUSTRIES = ['Software', 'Core Engg', 'Finance', 'Higher Studies'];
+
+const MENTORS = [
+  { id:'m1', name:'Priya Nandakumar', batch:2014, industry:'Software', jobTitle:'Staff Software Engineer', company:'Voltframe Systems',
+    linkedin:'https://linkedin.com/in/priya-nandakumar-demo',
+    domainExpertise:['Distributed systems','Backend APIs'],
+    mentoringTopics:['Interview prep','Career pivots to staff engineer','Resume review'],
+    slots:[
+      {id:'s1', date:'Sat, Sep 19', time:'10:00 AM', taken:false},
+      {id:'s2', date:'Sat, Sep 19', time:'4:00 PM', taken:true},
+      {id:'s3', date:'Sun, Sep 27', time:'11:00 AM', taken:false},
+    ]},
+  { id:'m2', name:'Aarav Deshmukh', batch:2019, industry:'Software', jobTitle:'SDE II', company:'Nimbus Cloud',
+    linkedin:'https://linkedin.com/in/aarav-deshmukh-demo',
+    domainExpertise:['Cloud infrastructure','Kubernetes'],
+    mentoringTopics:['System design interviews','Open source contributions'],
+    slots:[
+      {id:'s4', date:'Sun, Sep 20', time:'3:00 PM', taken:false},
+      {id:'s5', date:'Sat, Sep 26', time:'10:00 AM', taken:false},
+    ]},
+  { id:'m3', name:'Marcus Whitfield', batch:2016, industry:'Software', jobTitle:'Machine Learning Engineer', company:'Corvid Analytics',
+    linkedin:'https://linkedin.com/in/marcus-whitfield-demo',
+    domainExpertise:['Machine learning','Fraud detection models'],
+    mentoringTopics:['ML fundamentals','Portfolio review','Grad school vs. industry'],
+    slots:[
+      {id:'s6', date:'Sat, Sep 19', time:'6:00 PM', taken:false},
+      {id:'s7', date:'Sun, Sep 20', time:'11:00 AM', taken:true},
+    ]},
+  { id:'m4', name:'Sanjay Rathore', batch:2010, industry:'Core Engg', jobTitle:'Design Engineer', company:'Trident Motors',
+    linkedin:'https://linkedin.com/in/sanjay-rathore-demo',
+    domainExpertise:['Automotive design','CAD / CAM'],
+    mentoringTopics:['Core vs. software career choice','PSU exam prep'],
+    slots:[
+      {id:'s8', date:'Sat, Sep 26', time:'11:00 AM', taken:false},
+      {id:'s9', date:'Sun, Sep 27', time:'2:00 PM', taken:false},
+    ]},
+  { id:'m5', name:'Meera Kulkarni', batch:2013, industry:'Core Engg', jobTitle:'Site Engineer', company:'Ashland Infrastructure',
+    linkedin:'https://linkedin.com/in/meera-kulkarni-demo',
+    domainExpertise:['Structural engineering','Project execution'],
+    mentoringTopics:['On-site vs. desk roles','GATE preparation'],
+    slots:[
+      {id:'s10', date:'Sun, Sep 20', time:'10:00 AM', taken:true},
+    ]},
+  { id:'m6', name:'Devika Rao', batch:2015, industry:'Core Engg', jobTitle:'Process Engineer', company:'Bellweather Chemicals',
+    linkedin:'https://linkedin.com/in/devika-rao-demo',
+    domainExpertise:['Process design','Plant operations'],
+    mentoringTopics:['Core engineering interviews','Working in PSUs'],
+    slots:[
+      {id:'s11', date:'Sat, Sep 19', time:'1:00 PM', taken:false},
+      {id:'s12', date:'Sat, Sep 26', time:'1:00 PM', taken:false},
+    ]},
+  { id:'m7', name:'Daniel Osei', batch:2009, industry:'Finance', jobTitle:'VP, Equity Research', company:'Marlow & Finch',
+    linkedin:'https://linkedin.com/in/daniel-osei-demo',
+    domainExpertise:['Equity research','Industrials coverage'],
+    mentoringTopics:['Breaking into research','Resume review','Networking'],
+    slots:[
+      {id:'s13', date:'Sun, Sep 20', time:'12:00 PM', taken:false},
+      {id:'s14', date:'Sun, Sep 27', time:'5:00 PM', taken:false},
+    ]},
+  { id:'m8', name:'Ishaan Chatterjee', batch:2017, industry:'Finance', jobTitle:'Associate', company:'Falkridge Capital',
+    linkedin:'https://linkedin.com/in/ishaan-chatterjee-demo',
+    domainExpertise:['Investment banking','Mergers & acquisitions'],
+    mentoringTopics:['IB recruiting','Networking on campus'],
+    slots:[
+      {id:'s15', date:'Sat, Sep 19', time:'9:00 AM', taken:false},
+    ]},
+  { id:'m9', name:'Sofia Marchetti', batch:2015, industry:'Higher Studies', jobTitle:'PhD Candidate, Applied Physics', company:'Lindberg Institute of Technology',
+    linkedin:'https://linkedin.com/in/sofia-marchetti-demo',
+    domainExpertise:['Applied physics research','Grant writing'],
+    mentoringTopics:['PhD applications','Statement of purpose review','Gap years'],
+    slots:[
+      {id:'s16', date:'Sun, Sep 20', time:'9:00 AM', taken:false},
+      {id:'s17', date:'Sun, Sep 27', time:'9:00 AM', taken:false},
+    ]},
+  { id:'m10', name:'Karan Vora', batch:2021, industry:'Higher Studies', jobTitle:'MS Student, Computer Science', company:'Redwater University',
+    linkedin:'https://linkedin.com/in/karan-vora-demo',
+    domainExpertise:['Computer science research','Teaching assistantships'],
+    mentoringTopics:['GRE strategy','MS applications abroad','Funding & assistantships'],
+    slots:[
+      {id:'s18', date:'Sat, Sep 26', time:'3:00 PM', taken:false},
+      {id:'s19', date:'Sat, Sep 26', time:'5:00 PM', taken:true},
+    ]},
+];
+
+const COMPANIES = [...new Set(MENTORS.map(m => m.company))].sort();
+
+const RESOURCES = [
+  { id:'r1', cat:'Applications', title:'Writing a resume alumni will actually read', detail:'Lead with outcomes, not duties. Cut anything from before your current degree unless it changes the story. One page, always, before your first full-time role.' },
+  { id:'r2', cat:'Networking', title:'How to ask for a mentor conversation without sounding transactional', detail:'Name one specific thing about their path before asking for time. Propose a length (20 minutes) and let them choose the slot from what you offer.' },
+  { id:'r3', cat:'Interviews', title:'What to do in the 48 hours before a case interview', detail:'Redo two frameworks from memory rather than reading five new ones. Sleep matters more than one extra practice case.' },
+  { id:'r4', cat:'Core vs. software', title:'Deciding between a core engineering role and a software role', detail:'Look at what you did in your best internship, not your best exam. The work you kept doing after the deadline passed is the signal.' },
+  { id:'r5', cat:'Higher studies', title:'Deciding between grad school now or after a few years working', detail:'If you cannot name what the degree unlocks that experience alone would not, working first usually sharpens the answer.' },
+];
+
+/* ---------------------------------------------------------
+   State
+--------------------------------------------------------- */
+const state = {
+  view: 'directory',
+  filters: { industries: [], company: 'all', batchFrom: '', batchTo: '', query: '' },
+  requests: [],   // {id, mentorId, topic, question, resumeLink, slotId|null, status, sentAt}
+  panelMentorId: null,
+  selectedSlotId: null,
+};
+
+/* ---------------------------------------------------------
+   Helpers
+--------------------------------------------------------- */
+function initials(name){ return name.split(' ').map(p => p[0]).slice(0,2).join(''); }
+function mentorById(id){ return MENTORS.find(m => m.id === id); }
+function slotById(mentor, slotId){ return mentor.slots.find(s => s.id === slotId); }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function filteredMentors(){
+  return MENTORS.filter(m => {
+    if (state.filters.industries.length && !state.filters.industries.includes(m.industry)) return false;
+    if (state.filters.company !== 'all' && m.company !== state.filters.company) return false;
+    if (state.filters.batchFrom && m.batch < Number(state.filters.batchFrom)) return false;
+    if (state.filters.batchTo && m.batch > Number(state.filters.batchTo)) return false;
+    const q = state.filters.query.trim().toLowerCase();
+    if (q){
+      const hay = (m.name + ' ' + m.jobTitle + ' ' + m.company + ' ' + m.domainExpertise.join(' ') + ' ' + m.mentoringTopics.join(' ')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------------------------------------------------------
+   Nav
+--------------------------------------------------------- */
+function renderNav(){
+  const tabs = [
+    { id:'directory', label:'Directory' },
+    { id:'mentorship', label:'My mentorship' },
+    { id:'resources', label:'Resources' },
+  ];
+  const top = document.getElementById('topNav');
+  top.innerHTML = tabs.map(t => `<button data-view="${t.id}" class="${state.view===t.id?'active':''}">${t.label}</button>`).join('');
+  top.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+  const bottom = document.getElementById('bottomNav');
+  bottom.innerHTML = tabs.map(t => `<button data-view="${t.id}" class="${state.view===t.id?'active':''}">${t.label}</button>`).join('');
+  bottom.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+}
+function setView(v){ state.view = v; render(); window.scrollTo({top:0, behavior:'auto'}); }
+
+/* ---------------------------------------------------------
+   Directory
+--------------------------------------------------------- */
+function renderDirectory(){
+  const list = filteredMentors();
+
+  return `
+    <div class="view-head">
+      <h2>Find a mentor from the registry</h2>
+      <p>Filter by industry, company, or graduation batch, then look at open weekend slots before you write in.</p>
+    </div>
+
+    <button class="btn btn-ghost filters-toggle" id="openFilters">Filters</button>
+
+    <div class="directory-grid">
+      <div class="filter-rail" id="filterRail">
+        <div class="filter-group">
+          <h4>Search</h4>
+          <input class="search-box" id="searchInput" type="text" placeholder="Name, topic, or company" value="${escapeHtml(state.filters.query)}">
+        </div>
+        <div class="filter-group">
+          <h4>Industry</h4>
+          ${INDUSTRIES.map(ind => `
+            <label class="filter-option">
+              <input type="checkbox" data-industry="${ind}" ${state.filters.industries.includes(ind) ? 'checked' : ''}>
+              ${ind}
+            </label>
+          `).join('')}
+        </div>
+        <div class="filter-group">
+          <h4>Company</h4>
+          <select class="search-box" id="companySelect">
+            <option value="all" ${state.filters.company==='all'?'selected':''}>All companies</option>
+            ${COMPANIES.map(c => `<option value="${c}" ${state.filters.company===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <h4>Graduation batch</h4>
+          <div class="batch-range">
+            <input type="number" id="batchFrom" placeholder="From" value="${state.filters.batchFrom}">
+            <span>–</span>
+            <input type="number" id="batchTo" placeholder="To" value="${state.filters.batchTo}">
+          </div>
+        </div>
+        <button class="clear-filters" id="clearFilters">Clear filters</button>
+      </div>
+
+      <div>
+        <p class="results-count">${list.length} mentor${list.length===1?'':'s'} match${list.length===1?'es':''}</p>
+        ${list.length === 0 ? `
+          <div class="empty-state">
+            <p>No mentors match these filters yet. Try widening your search.</p>
+            <button class="btn btn-ghost" id="emptyClear">Clear filters</button>
+          </div>
+        ` : `
+          <div class="mentor-list">
+            ${list.map(m => {
+              const openSlots = m.slots.filter(s => !s.taken).length;
+              const already = state.requests.some(r => r.mentorId === m.id);
+              return `
+              <div class="mentor-card">
+                <div class="mentor-tab"><span>Batch of ${m.batch}</span></div>
+                <div class="mentor-body">
+                  <div class="mentor-top">
+                    <h3>${m.name}</h3>
+                    <span class="mentor-role">${m.jobTitle}, ${m.company}</span>
+                  </div>
+                  <p class="mentor-industry-line">${m.industry}</p>
+                  <p class="mentor-tags"><b>Domain:</b> ${m.domainExpertise.join(', ')}</p>
+                  <p class="mentor-tags"><b>Can mentor on:</b> ${m.mentoringTopics.join(', ')}</p>
+                  <div class="mentor-actions">
+                    <button class="btn btn-primary" data-open="${m.id}">${already ? 'View request' : 'Request mentorship'}</button>
+                    <a class="linkedin-link" href="${m.linkedin}" target="_blank" rel="noopener">View LinkedIn</a>
+                    <span class="slots-hint ${openSlots===0?'full':''}">${openSlots===0 ? 'No open weekend slots' : openSlots + ' open weekend slot' + (openSlots===1?'':'s')}</span>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function wireDirectory(){
+  const search = document.getElementById('searchInput');
+  if (search) search.addEventListener('input', (e) => {
+    state.filters.query = e.target.value;
+    renderMain();
+    const s2 = document.getElementById('searchInput');
+    if (s2){ s2.focus(); s2.setSelectionRange(s2.value.length, s2.value.length); }
+  });
+
+  document.querySelectorAll('[data-industry]').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const ind = e.target.dataset.industry;
+      if (e.target.checked) state.filters.industries.push(ind);
+      else state.filters.industries = state.filters.industries.filter(i => i !== ind);
+      renderMain();
+    });
+  });
+
+  const companySelect = document.getElementById('companySelect');
+  if (companySelect) companySelect.addEventListener('change', (e) => { state.filters.company = e.target.value; renderMain(); });
+
+  const batchFrom = document.getElementById('batchFrom');
+  const batchTo = document.getElementById('batchTo');
+  if (batchFrom) batchFrom.addEventListener('input', (e) => { state.filters.batchFrom = e.target.value; renderMain(); document.getElementById('batchFrom').focus(); });
+  if (batchTo) batchTo.addEventListener('input', (e) => { state.filters.batchTo = e.target.value; renderMain(); document.getElementById('batchTo').focus(); });
+
+  const clear = document.getElementById('clearFilters');
+  if (clear) clear.addEventListener('click', () => { state.filters = {industries:[], company:'all', batchFrom:'', batchTo:'', query:''}; renderMain(); });
+  const emptyClear = document.getElementById('emptyClear');
+  if (emptyClear) emptyClear.addEventListener('click', () => { state.filters = {industries:[], company:'all', batchFrom:'', batchTo:'', query:''}; renderMain(); });
+
+  document.querySelectorAll('[data-open]').forEach(btn => btn.addEventListener('click', () => openPanel(btn.dataset.open)));
+
+  const openFilters = document.getElementById('openFilters');
+  if (openFilters) openFilters.addEventListener('click', () => {
+    document.getElementById('filterRail').classList.add('open');
+    ensureScrim(true, closeFilterRail);
+  });
+}
+function closeFilterRail(){
+  const rail = document.getElementById('filterRail');
+  if (rail) rail.classList.remove('open');
+  ensureScrim(false);
+}
+
+/* ---------------------------------------------------------
+   Detail panel + booking calendar
+--------------------------------------------------------- */
+function buildCalendar(mentor){
+  const dates = [...new Set(mentor.slots.map(s => s.date))];
+  const times = [...new Set(mentor.slots.map(s => s.time))].sort((a,b) => {
+    // rough chronological sort by parsing "H:MM AM/PM"
+    const toMin = t => {
+      const [_, h, m, ap] = t.match(/(\d+):(\d+)\s?(AM|PM)/);
+      let hh = parseInt(h) % 12; if (ap === 'PM') hh += 12;
+      return hh*60 + parseInt(m);
+    };
+    return toMin(a) - toMin(b);
+  });
+
+  let rows = times.map(time => {
+    const cells = dates.map(date => {
+      const slot = mentor.slots.find(s => s.date === date && s.time === time);
+      if (!slot) return `<td class="slot-cell-none">—</td>`;
+      if (slot.taken) return `<td><span class="slot-cell-taken">Booked</span></td>`;
+      const selected = state.selectedSlotId === slot.id;
+      return `<td><button type="button" class="slot-cell-btn ${selected?'selected':''}" data-slot="${slot.id}">${selected ? 'Selected' : 'Select'}</button></td>`;
+    }).join('');
+    return `<tr><td class="rowlabel">${time}</td>${cells}</tr>`;
+  }).join('');
+
+  const header = dates.map(d => {
+    const [day, rest] = d.split(', ');
+    return `<th><span class="day-name">${day}</span><span class="day-date">${rest}</span></th>`;
+  }).join('');
+
+  return `
+    <div class="calendar-wrap">
+      <table class="calendar-table">
+        <thead><tr><th></th>${header}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p class="calendar-legend">All sessions run on weekends, 30 minutes, over video call.</p>
+  `;
+}
+
+function openPanel(mentorId){
+  state.panelMentorId = mentorId;
+  state.selectedSlotId = null;
+  const mentor = mentorById(mentorId);
+  const existingReq = state.requests.find(r => r.mentorId === mentorId);
+  renderPanel(mentor, existingReq);
+
+  const panel = document.getElementById('panel');
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  ensureScrim(true, closePanel);
+}
+
+function renderPanel(mentor, existingReq){
+  const panel = document.getElementById('panel');
+
+  panel.innerHTML = `
+    <div class="panel-head">
+      <div>
+        <div class="avatar-stamp">${initials(mentor.name)}</div>
+        <h3>${mentor.name}</h3>
+        <p class="panel-meta">Batch of ${mentor.batch} · ${mentor.industry}</p>
+        <p class="panel-meta">${mentor.jobTitle}, ${mentor.company}</p>
+        <a class="panel-linkedin" href="${mentor.linkedin}" target="_blank" rel="noopener">View LinkedIn profile</a>
+      </div>
+      <button class="panel-close" id="closePanel" aria-label="Close">&times;</button>
+    </div>
+    <div class="panel-body">
+      <div class="panel-section">
+        <h4>Domain expertise</h4>
+        <div class="tag-row">${mentor.domainExpertise.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>
+      </div>
+      <div class="panel-section">
+        <h4>Available mentoring topics</h4>
+        <div class="tag-row">${mentor.mentoringTopics.map(t => `<span class="tag-pill topic">${t}</span>`).join('')}</div>
+      </div>
+
+      ${existingReq ? `
+        <div class="panel-section">
+          <h4>Your request</h4>
+          <p>Sent ${existingReq.sentAt} on "${escapeHtml(existingReq.topic)}".${existingReq.slotId ? ' Booked for ' + slotById(mentor, existingReq.slotId).date + ', ' + slotById(mentor, existingReq.slotId).time + '.' : ' Waiting on a time from ' + mentor.name.split(' ')[0] + '.'}</p>
+          <p class="request-resume">Resume shared: <a href="${existingReq.resumeLink}" target="_blank" rel="noopener">${existingReq.resumeLink}</a></p>
+          <p class="request-msg">"${escapeHtml(existingReq.question)}"</p>
+          <p class="panel-meta" style="margin-top:10px;">Status: ${existingReq.status}</p>
+        </div>
+      ` : `
+        <div class="panel-section">
+          <h4>Session booking calendar — open weekend slots</h4>
+          ${mentor.slots.length ? buildCalendar(mentor) : '<p>No weekend slots posted right now. You can still send a request and ask for a time.</p>'}
+          <div class="calendar-none-option">
+            <input type="radio" name="slotChoice" id="slot-none" ${state.selectedSlotId ? '' : 'checked'}>
+            <label for="slot-none">No fixed slot — ask ${mentor.name.split(' ')[0]} to suggest a time</label>
+          </div>
+        </div>
+        <div class="panel-section">
+          <label class="field-label" for="topicSelect">Topic you'd like to discuss</label>
+          <select class="form-input" id="topicSelect">
+            ${mentor.mentoringTopics.map(t => `<option value="${t}">${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="panel-section">
+          <label class="field-label" for="reqQuestion">Your career question</label>
+          <textarea id="reqQuestion" placeholder="What specifically would you like ${mentor.name.split(' ')[0]}'s take on?"></textarea>
+        </div>
+        <div class="panel-section">
+          <label class="field-label" for="resumeLink">Resume link</label>
+          <input type="url" class="form-input" id="resumeLink" placeholder="https://drive.google.com/... or similar">
+          <p class="form-error" id="formError" style="display:none;"></p>
+        </div>
+      `}
+    </div>
+    ${existingReq ? `
+      <div class="panel-footer">
+        <button class="btn btn-ghost" id="cancelFromPanel" style="width:100%; justify-content:center; padding:11px; font-size:14.5px;">Cancel this request</button>
+      </div>
+    ` : `
+      <div class="panel-footer">
+        <button class="btn btn-primary" id="sendRequest">Send request</button>
+        <p class="form-note">Alumni typically confirm within a few days. Booking a slot below reserves it right away.</p>
+      </div>
+    `}
+  `;
+
+  document.getElementById('closePanel').addEventListener('click', closePanel);
+
+  document.querySelectorAll('[data-slot]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const slotId = btn.dataset.slot;
+      state.selectedSlotId = state.selectedSlotId === slotId ? null : slotId;
+      renderPanel(mentor, existingReq);
+    });
+  });
+
+  const sendBtn = document.getElementById('sendRequest');
+  if (sendBtn) sendBtn.addEventListener('click', () => submitRequest(mentor));
+
+  const cancelBtn = document.getElementById('cancelFromPanel');
+  if (cancelBtn) cancelBtn.addEventListener('click', () => { cancelRequest(existingReq.id); closePanel(); });
+}
+
+function closePanel(){
+  const panel = document.getElementById('panel');
+  panel.classList.remove('open');
+  panel.setAttribute('aria-hidden', 'true');
+  ensureScrim(false);
+  state.panelMentorId = null;
+  state.selectedSlotId = null;
+}
+
+function ensureScrim(open, onClick){
+  const scrim = document.getElementById('scrim');
+  scrim.classList.toggle('open', open);
+  scrim.onclick = open ? (onClick || (() => { closePanel(); closeFilterRail(); })) : null;
+}
+
+function submitRequest(mentor){
+  const question = document.getElementById('reqQuestion').value.trim();
+  const resumeLink = document.getElementById('resumeLink').value.trim();
+  const topic = document.getElementById('topicSelect').value;
+  const errorEl = document.getElementById('formError');
+
+  if (!question || !resumeLink){
+    errorEl.textContent = 'Add both a career question and a resume link before sending.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const slotId = state.selectedSlotId;
+  if (slotId){
+    const slot = slotById(mentor, slotId);
+    slot.taken = true;
+  }
+
+  state.requests.unshift({
+    id: 'req-' + Date.now(),
+    mentorId: mentor.id,
+    topic, question, resumeLink,
+    slotId,
+    status: slotId ? 'confirmed' : 'pending',
+    sentAt: 'just now',
+  });
+
+  closePanel();
+  render();
+  showToast(slotId ? 'Session booked — added to My mentorship.' : 'Request sent — you\'ll see it under My mentorship.');
+}
+
+function cancelRequest(reqId){
+  const req = state.requests.find(r => r.id === reqId);
+  if (req && req.slotId){
+    const mentor = mentorById(req.mentorId);
+    const slot = slotById(mentor, req.slotId);
+    if (slot) slot.taken = false;
+  }
+  state.requests = state.requests.filter(r => r.id !== reqId);
+  render();
+  showToast('Request cancelled.');
+}
+
+/* ---------------------------------------------------------
+   My mentorship
+--------------------------------------------------------- */
+function renderMentorship(){
+  if (state.requests.length === 0){
+    return `
+      <div class="view-head">
+        <h2>My mentorship</h2>
+        <p>Requests you've sent to alumni will collect here, along with the resume link and question you shared.</p>
+      </div>
+      <div class="empty-state">
+        <p>You haven't reached out to any mentors yet. Browse the directory to get started.</p>
+        <button class="btn btn-primary" id="goDirectory">Browse the directory</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="view-head">
+      <h2>My mentorship</h2>
+      <p>${state.requests.length} request${state.requests.length===1?'':'s'} on file.</p>
+    </div>
+    ${state.requests.map(r => {
+      const mentor = mentorById(r.mentorId);
+      const slot = r.slotId ? slotById(mentor, r.slotId) : null;
+      return `
+        <div class="request-row">
+          <div class="request-main">
+            <h3>${mentor.name}</h3>
+            <p class="request-meta">${mentor.jobTitle}, ${mentor.company} · Batch of ${mentor.batch} · ${mentor.industry}</p>
+            <p class="request-meta">Topic: ${escapeHtml(r.topic)}</p>
+            ${slot ? `<p class="request-meta">Scheduled: ${slot.date}, ${slot.time}</p>` : `<p class="request-meta">No fixed slot yet</p>`}
+            <p class="request-msg">"${escapeHtml(r.question)}"</p>
+            <p class="request-resume">Resume: <a href="${r.resumeLink}" target="_blank" rel="noopener">${escapeHtml(r.resumeLink)}</a></p>
+          </div>
+          <span class="stamp ${r.status}">${r.status === 'pending' ? 'Pending review' : r.status === 'confirmed' ? 'Confirmed' : 'Declined'}</span>
+          <button class="request-cancel" data-cancel="${r.id}">Cancel</button>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+function wireMentorship(){
+  const go = document.getElementById('goDirectory');
+  if (go) go.addEventListener('click', () => setView('directory'));
+  document.querySelectorAll('[data-cancel]').forEach(btn => btn.addEventListener('click', () => cancelRequest(btn.dataset.cancel)));
+}
+
+/* ---------------------------------------------------------
+   Resources
+--------------------------------------------------------- */
+let expandedResource = null;
+function renderResources(){
+  return `
+    <div class="view-head">
+      <h2>Career guidance notes</h2>
+      <p>Short, specific advice contributed by alumni over the years. Not a substitute for a real conversation — a place to start one.</p>
+    </div>
+    ${RESOURCES.map(r => `
+      <div class="resource-row ${expandedResource===r.id?'expanded':''}" data-res="${r.id}">
+        <div class="resource-top">
+          <div>
+            <p class="resource-cat mono">${r.cat}</p>
+            <h3>${r.title}</h3>
+          </div>
+          <button class="resource-toggle" aria-label="Expand">+</button>
+        </div>
+        <p class="resource-detail">${r.detail}</p>
+      </div>
+    `).join('')}
+  `;
+}
+function wireResources(){
+  document.querySelectorAll('[data-res]').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.dataset.res;
+      expandedResource = expandedResource === id ? null : id;
+      renderMain();
+    });
+  });
+}
+
+/* ---------------------------------------------------------
+   Orchestration
+--------------------------------------------------------- */
+function renderMain(){
+  const main = document.getElementById('mainContent');
+  if (state.view === 'directory'){ main.innerHTML = renderDirectory(); wireDirectory(); }
+  else if (state.view === 'mentorship'){ main.innerHTML = renderMentorship(); wireMentorship(); }
+  else { main.innerHTML = renderResources(); wireResources(); }
+}
+function render(){ renderNav(); renderMain(); }
+render();
+</script>
+</body>
+</html>
